@@ -10,6 +10,9 @@ sys.setdefaultencoding("utf-8")
 from bs4 import BeautifulSoup
 import unicodedata
 
+re_all_but_letters = re.compile(r'[^\w ]+', re.UNICODE)
+re_single_spaces = re.compile(r'\s+', re.UNICODE)
+
 def get_text_and_stars(book_id):
     # book_id = 4484
     comments_url = 'http://lubimyczytac.pl/ksiazka/{0}'.format(book_id)
@@ -55,8 +58,6 @@ def remove_accents(s):
     return tmp
 
 def transform(lines):
-    re_all_but_letters = re.compile(r'[^\w ]+', re.UNICODE)
-    re_single_spaces = re.compile(r'\s+', re.UNICODE)
     transformed = []
 
     for line in lines:
@@ -78,6 +79,19 @@ def transform(lines):
 
     return transformed
 
+def transform_to_ascii(lines):
+    transformed = []
+
+    for line in lines:
+        line = remove_accents(line)
+        line = line.lower()
+        line = re_all_but_letters.sub('', line)
+        line = re_single_spaces.sub(' ', line)
+
+        transformed.append(line)
+
+    return transformed
+
 def run():
     product_id = random.randint(1, 300000)
     return get_text_and_stars(product_id)
@@ -89,6 +103,7 @@ if __name__ == '__main__':
         if sys.argv[1] == 'test':
             get_text_and_stars(1)
 
+        # Create data files from raw downloaded data.
         elif sys.argv[1] == 'transform_raw':
             negative = []
             positive = []
@@ -107,6 +122,8 @@ if __name__ == '__main__':
                         negative.append(text.decode('utf-8'))
                     else:
                         positive.append(text.decode('utf-8'))
+
+            transform = transform_to_ascii
 
             negative = transform(negative)
             positive = transform(positive)
