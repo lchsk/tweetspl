@@ -79,7 +79,20 @@ def transform(lines):
 
     return transformed
 
-def transform_to_ascii(lines):
+def transform_to_ascii(lines, to_infinitive=True):
+    if to_infinitive:
+        # Load external dictionary in order to change inflected
+        # word to an infinitive.
+
+        path = '../../../pldict/dictionary/pl_infl_to_inf_ascii'
+        dictionary = {}
+
+        with open(path) as f:
+            for entry in f:
+                infl, inf = entry.split('=')
+
+                dictionary[infl] = inf.strip()
+
     transformed = []
 
     for line in lines:
@@ -88,7 +101,18 @@ def transform_to_ascii(lines):
         line = re_all_but_letters.sub('', line)
         line = re_single_spaces.sub(' ', line)
 
-        transformed.append(line)
+        if to_infinitive:
+            output = []
+
+            for word in line.split():
+                if word in dictionary and not dictionary[word].startswith('wikis'):
+                    output.append(dictionary[word])
+
+            output = ' '.join(output)
+        else:
+            output = line
+
+        transformed.append(output)
 
     return transformed
 
@@ -118,9 +142,11 @@ if __name__ == '__main__':
                     except ValueError:
                         continue
 
-                    if int(mark) <= 5:
+                    mark = int(mark)
+
+                    if mark in (1, 2, 3):
                         negative.append(text.decode('utf-8'))
-                    else:
+                    elif mark in (8, 9, 10):
                         positive.append(text.decode('utf-8'))
 
             transform = transform_to_ascii
